@@ -287,8 +287,7 @@ assign ram_addr_o       = addr_w;
 assign ram_write_data_o = axi_wdata_i;
 assign ram_rd_o         = rd_w;
 assign ram_wr_o         = wr_w ? axi_wstrb_i : 4'b0;
-assign ram_len_o        = axi_awvalid_i ? axi_awlen_i:
-                          axi_arvalid_i ? axi_arlen_i : 8'b0;
+assign ram_len_o        = 8'b0;
 
 //-----------------------------------------------------------------
 // Response

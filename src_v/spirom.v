@@ -169,8 +169,11 @@ reg [STATE_W-1:0]           next_state_r;
 reg [9:0]                   byte_count_q;
 wire                        cs_blocked_w;
 
+reg                         spi_reset_q;
+
 // SPI Flash Commands
 localparam SPI_CMD_READ      = 8'h03;
+localparam SPI_CMD_RESET     = 8'hFF;
 
 //-----------------------------------------------------------------
 // Instantiation
@@ -213,7 +216,7 @@ begin
     STATE_IDLE : 
     begin
         // Access request (and transfer in-active)
-        if (ram_req_w)
+        if (ram_req_w || spi_reset_q)
             next_state_r = STATE_CS_SELECT;
     end
     //-------------------------------
@@ -233,7 +236,7 @@ begin
     // STATE_ADDR1
     //-------------------------------
     STATE_ADDR1 :
-        next_state_r = STATE_ADDR2;
+        next_state_r = spi_reset_q ? STATE_CS_DESELECT : STATE_ADDR2;
     //-------------------------------
     // STATE_ADDR2
     //-------------------------------
@@ -276,6 +279,12 @@ if (rst_i)
 else if (state_q == STATE_IDLE || state_q == STATE_CS_SELECT || state_q == STATE_CS_DESELECT || spi_done_w)
     state_q <= next_state_r;
 
+always @ (posedge clk_i or posedge rst_i)
+if (rst_i)
+    spi_reset_q <= 1'b1;
+else if (state_q == STATE_CS_DESELECT)
+    spi_reset_q <= 1'b0;
+
 //-----------------------------------------------------------------
 // SPI Tx
 //-----------------------------------------------------------------
@@ -293,7 +302,7 @@ begin
         if (!cs_blocked_w)
         begin
             spi_start_r   = 1'b1;
-            spi_data_wr_r = SPI_CMD_READ;
+            spi_data_wr_r = spi_reset_q ? SPI_CMD_RESET : SPI_CMD_READ;
         end
     end
     //-------------------------------
@@ -302,14 +311,14 @@ begin
     STATE_CMD :
     begin
         spi_start_r   = 1'b1;
-        spi_data_wr_r = ram_addr_w[23:16];
+        spi_data_wr_r = spi_reset_q ? SPI_CMD_RESET : ram_addr_w[23:16];
     end
     //-------------------------------
     // STATE_ADDR1
     //-------------------------------
     STATE_ADDR1 :
     begin
-        spi_start_r   = 1'b1;
+        spi_start_r   = ~spi_reset_q;
         spi_data_wr_r = ram_addr_w[15:8];
     end
     //-------------------------------
@@ -376,6 +385,8 @@ begin
     spi_ss_q   <= 1'b0;
     cs_delay_q <= cs_delay_q - 8'd1;
 end
+else if (state_q == STATE_ADDR1 && spi_reset_q && spi_done_w)
+    cs_delay_q <= tSLSL_CYCLES;
 else if (state_q == STATE_DATA && byte_count_q == 10'b0 && spi_done_w)
     cs_delay_q <= tSLSL_CYCLES;
 else if (state_q == STATE_CS_DESELECT && cs_blocked_w)
@@ -419,7 +430,7 @@ else if (state_q == STATE_DATA && spi_done_w)
 //-----------------------------------------------------------------    
 assign ram_accept_w    = ((state_q == STATE_ADDR3) ||
                          (state_q == STATE_DATA && (byte_count_q != 10'b0 && byte_count_q[1:0] == 2'b00))) &&
-                         spi_done_w;
+                         spi_done_w && !spi_reset_q;
 
 endmodule
 
