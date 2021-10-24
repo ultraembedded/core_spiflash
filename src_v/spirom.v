@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------
 //                     SPI-Flash XIP Interface
-//                              V0.1
-//                        Ultra-Embedded.com
-//                          Copyright 2019
+//                              V0.2
+//              github.com/ultraembedded/core_spiflash
+//                       Copyright 2019-2021
 //
 //                 Email: admin@ultra-embedded.com
 //
@@ -30,10 +30,6 @@
 // Public License along with this source; if not, write to the 
 // Free Software Foundation, Inc., 59 Temple Place, Suite 330, 
 // Boston, MA  02111-1307  USA
-//-----------------------------------------------------------------
-
-//-----------------------------------------------------------------
-//                          Generated File
 //-----------------------------------------------------------------
 
 module spirom
@@ -85,6 +81,84 @@ parameter CLK_DIV      = 8; // Clock divisor (0 - 65535) - spi_clk = clk_i / (1 
 //-----------------------------------------------------------------
 // AXI Interface
 //-----------------------------------------------------------------
+wire          inport_cvalid_w;
+wire [ 31:0]  inport_caddr_w;
+wire [ 31:0]  inport_cdata_w;
+wire [  3:0]  inport_cstrb_w;
+wire [  3:0]  inport_cid_w;
+wire [  7:0]  inport_clen_w;
+wire          inport_cwrite_w;
+wire          inport_cfirst_w;
+wire          inport_clast_w;
+wire [  2:0]  inport_ctype_w;
+wire          inport_rready_w;
+wire          inport_cready_w;
+wire          inport_cburstok_w;
+wire          inport_rvalid_w;
+wire          inport_rwrite_w;
+wire [ 31:0]  inport_rdata_w;
+wire [  1:0]  inport_rresp_w;
+wire [  3:0]  inport_rid_w;
+wire          inport_rlast_w;
+
+spirom_axi
+u_axi
+(
+     .clk_i(clk_i)
+    ,.rst_i(rst_i)
+
+    ,.axi_awvalid_i(inport_awvalid_i)
+    ,.axi_awaddr_i(inport_awaddr_i)
+    ,.axi_awid_i(inport_awid_i)
+    ,.axi_awlen_i(inport_awlen_i)
+    ,.axi_awburst_i(inport_awburst_i)
+    ,.axi_wvalid_i(inport_wvalid_i)
+    ,.axi_wdata_i(inport_wdata_i)
+    ,.axi_wstrb_i(inport_wstrb_i)
+    ,.axi_wlast_i(inport_wlast_i)
+    ,.axi_bready_i(inport_bready_i)
+    ,.axi_arvalid_i(inport_arvalid_i)
+    ,.axi_araddr_i(inport_araddr_i)
+    ,.axi_arid_i(inport_arid_i)
+    ,.axi_arlen_i(inport_arlen_i)
+    ,.axi_arburst_i(inport_arburst_i)
+    ,.axi_rready_i(inport_rready_i)
+    ,.axi_awready_o(inport_awready_o)
+    ,.axi_wready_o(inport_wready_o)
+    ,.axi_bvalid_o(inport_bvalid_o)
+    ,.axi_bresp_o(inport_bresp_o)
+    ,.axi_bid_o(inport_bid_o)
+    ,.axi_arready_o(inport_arready_o)
+    ,.axi_rvalid_o(inport_rvalid_o)
+    ,.axi_rdata_o(inport_rdata_o)
+    ,.axi_rresp_o(inport_rresp_o)
+    ,.axi_rid_o(inport_rid_o)
+    ,.axi_rlast_o(inport_rlast_o)
+
+    ,.outport_cvalid_o(inport_cvalid_w)
+    ,.outport_caddr_o(inport_caddr_w)
+    ,.outport_cdata_o(inport_cdata_w)
+    ,.outport_cstrb_o(inport_cstrb_w)
+    ,.outport_cid_o(inport_cid_w)
+    ,.outport_clen_o(inport_clen_w)
+    ,.outport_cwrite_o(inport_cwrite_w)
+    ,.outport_cfirst_o(inport_cfirst_w)
+    ,.outport_clast_o(inport_clast_w)
+    ,.outport_ctype_o(inport_ctype_w)
+    ,.outport_rready_o(inport_rready_w)
+    ,.outport_cready_i(inport_cready_w)
+    ,.outport_cburstok_i(inport_cburstok_w)
+    ,.outport_rvalid_i(inport_rvalid_w)
+    ,.outport_rwrite_i(inport_rwrite_w)
+    ,.outport_rdata_i(inport_rdata_w)
+    ,.outport_rresp_i(inport_rresp_w)
+    ,.outport_rid_i(inport_rid_w)
+    ,.outport_rlast_i(inport_rlast_w)
+);
+
+//-----------------------------------------------------------------
+// Bus Interface
+//-----------------------------------------------------------------
 wire [ 31:0]  ram_addr_w;
 wire [  3:0]  ram_wr_w;
 wire          ram_rd_w;
@@ -97,51 +171,43 @@ wire          ram_ack_w;
 // however the converter will error write transactions.
 wire          ram_req_w = (ram_wr_w != 4'b0) | ram_rd_w;
 
-spi_lite_pmem
-u_axi
+spirom_sbm
+u_bus
 (
-    .clk_i(clk_i),
-    .rst_i(rst_i),
+     .clk_i(clk_i)
+    ,.rst_i(rst_i)
 
-    // AXI port
-    .axi_awvalid_i(inport_awvalid_i),
-    .axi_awaddr_i(inport_awaddr_i),
-    .axi_awid_i(inport_awid_i),
-    .axi_awlen_i(inport_awlen_i),
-    .axi_awburst_i(inport_awburst_i),
-    .axi_wvalid_i(inport_wvalid_i),
-    .axi_wdata_i(inport_wdata_i),
-    .axi_wstrb_i(inport_wstrb_i),
-    .axi_wlast_i(inport_wlast_i),
-    .axi_bready_i(inport_bready_i),
-    .axi_arvalid_i(inport_arvalid_i),
-    .axi_araddr_i(inport_araddr_i),
-    .axi_arid_i(inport_arid_i),
-    .axi_arlen_i(inport_arlen_i),
-    .axi_arburst_i(inport_arburst_i),
-    .axi_rready_i(inport_rready_i),
-    .axi_awready_o(inport_awready_o),
-    .axi_wready_o(inport_wready_o),
-    .axi_bvalid_o(inport_bvalid_o),
-    .axi_bresp_o(inport_bresp_o),
-    .axi_bid_o(inport_bid_o),
-    .axi_arready_o(inport_arready_o),
-    .axi_rvalid_o(inport_rvalid_o),
-    .axi_rdata_o(inport_rdata_o),
-    .axi_rresp_o(inport_rresp_o),
-    .axi_rid_o(inport_rid_o),
-    .axi_rlast_o(inport_rlast_o),
+    // Bus
+    ,.inport_cvalid_i(inport_cvalid_w)
+    ,.inport_caddr_i(inport_caddr_w)
+    ,.inport_cdata_i(inport_cdata_w)
+    ,.inport_cstrb_i(inport_cstrb_w)
+    ,.inport_cid_i(inport_cid_w)
+    ,.inport_clen_i(inport_clen_w)
+    ,.inport_cwrite_i(inport_cwrite_w)
+    ,.inport_cfirst_i(inport_cfirst_w)
+    ,.inport_clast_i(inport_clast_w)
+    ,.inport_ctype_i(inport_ctype_w)
+    ,.inport_rready_i(inport_rready_w)
+    ,.inport_cready_o(inport_cready_w)
+    ,.inport_cburstok_o(inport_cburstok_w)
+    ,.inport_rvalid_o(inport_rvalid_w)
+    ,.inport_rwrite_o(inport_rwrite_w)
+    ,.inport_rdata_o(inport_rdata_w)
+    ,.inport_rresp_o(inport_rresp_w)
+    ,.inport_rid_o(inport_rid_w)
+    ,.inport_rlast_o(inport_rlast_w)
     
     // RAM interface
-    .ram_addr_o(ram_addr_w),
-    .ram_accept_i(ram_accept_w),
-    .ram_wr_o(ram_wr_w),
-    .ram_rd_o(ram_rd_w),
-    .ram_len_o(ram_len_w),
-    .ram_write_data_o(),
-    .ram_ack_i(ram_ack_w),
-    .ram_error_i(1'b0),
-    .ram_read_data_i(ram_read_data_w)
+    ,.ram_addr_o(ram_addr_w)
+    ,.ram_accept_i(ram_accept_w)
+    ,.ram_wr_o(ram_wr_w)
+    ,.ram_rd_o(ram_rd_w)
+    ,.ram_len_o(ram_len_w)
+    ,.ram_write_data_o()
+    ,.ram_ack_i(ram_ack_w)
+    ,.ram_error_i(1'b0)
+    ,.ram_read_data_i(ram_read_data_w)
 );
 
 //-----------------------------------------------------------------
